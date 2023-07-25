@@ -1,0 +1,12 @@
+[project]
+name = "ink-server" 
+description = "ink-server" 
+readme = "README.md"
+version = "1.0.0"
+requires-python = ">=3.7"
+license = {file = "LICENSE.md"}
+dependencies = []
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+[tool.setuptools]
+package-data = {"inkserver" = ["py.typed"]}

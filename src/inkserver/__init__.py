@@ -1,0 +1,1 @@
+from .inkserver import app

@@ -1,0 +1,6 @@
+black
+python-dotenv
+fastapi
+types-requests
+uvicorn
+./lib/ink
