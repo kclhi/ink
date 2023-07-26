@@ -2,6 +2,8 @@ import React, {useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
 import DOMPurify from 'dompurify';
 
+import './Chat.css';
+
 const Chat: React.FC = () => {
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -41,17 +43,14 @@ const Chat: React.FC = () => {
     if(!messages) return;
 
     try {
-      const response = await axios.post(
-        'http://localhost:8000/signMessages',
-        messages.map((message) => ({message: message.text}))
-      );
+      const response = await axios.post('http://localhost:8000/signMessages', messages);
 
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           text:
-            'This chat has now been verified: <a href="/verifySignature/' +
-            encodeURIComponent(JSON.stringify(messages.map((message) => ({message: message.text})))) +
+            'This chat has now been verified. To demonstrate this, share or visit the following link: <a href="/verifySignature/' +
+            encodeURIComponent(JSON.stringify(messages)) +
             '/' +
             encodeURIComponent(response.data.signature) +
             '">' +
@@ -69,25 +68,31 @@ const Chat: React.FC = () => {
 
   return (
     <div>
-      <div className="chat-window">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`message ${message.sender}`}
-            dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(message.text)}}
-          ></div>
-        ))}
-      </div>
-      <div className="input-container">
-        <input
-          type="text"
-          value={inputText}
-          onChange={handleInputChange}
-          onKeyDown={sendMessageKey}
-          placeholder="Type your message..."
-        />
-        <button onClick={sendMessageButton}>Send</button>
-        <button onClick={signMessages}>Verify</button>
+      <div className="padlock-div">
+        <button onClick={signMessages} className="padlock-button">
+          <i className="fas fa-lock"></i>
+        </button>
+        <div className="chat-window">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`message ${message.sender}`}
+              dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(message.text)}}
+            ></div>
+          ))}
+        </div>
+        <div className="input-container">
+          <input
+            type="text"
+            value={inputText}
+            onChange={handleInputChange}
+            onKeyDown={sendMessageKey}
+            placeholder="Type your message..."
+          />
+          <button className="paper-airplane-button" onClick={sendMessageButton}>
+            <i className="fas fa-paper-plane"></i>
+          </button>
+        </div>
       </div>
     </div>
   );

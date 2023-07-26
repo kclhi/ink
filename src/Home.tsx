@@ -1,13 +1,10 @@
 import React from 'react';
 import Chat from './Chat';
-import './App.css';
+import './Home.css';
 
 const Home: React.FC = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Ink</h1>
-      </header>
+    <div>
       <main>
         <Chat />
       </main>
