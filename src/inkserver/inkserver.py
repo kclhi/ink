@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from ink.ink import Ink
 from inkserver.inkserver_types import Message, Signature, Verified
-from ink.ink_types import InkMessages
+from ink.ink_types import InkMessage
 
 load_dotenv()
 app = FastAPI()
@@ -33,17 +33,9 @@ def readMessage(message: Message) -> JSONResponse:
 
 
 @app.post("/signMessages", response_model=Signature)
-def readMessages(messages: list[Message]) -> JSONResponse:
+def readMessages(messages: list[InkMessage]) -> JSONResponse:
     ink: Ink = Ink()
-    return JSONResponse(
-        content={
-            'signature': ink.signMessages(
-                InkMessages(
-                    messages=list(map(lambda message: str(message.message), messages))
-                )
-            )
-        }
-    )
+    return JSONResponse(content={'signature': ink.signMessages(messages)})
 
 
 @app.get("/verifySignature/{messages}/{signature:path}", response_model=Verified)
@@ -53,19 +45,9 @@ def readSignature(messages: str, signature: str) -> JSONResponse:
         content={
             'verified': ink.verifySignature(
                 urllib.parse.unquote(signature),
-                InkMessages(
-                    messages=list(
-                        map(
-                            lambda message: str(message.message),
-                            cast(
-                                list[Message],
-                                json.loads(
-                                    urllib.parse.unquote(messages),
-                                    object_hook=lambda x: Message(**x),
-                                ),
-                            ),
-                        )
-                    )
+                json.loads(
+                    urllib.parse.unquote(messages),
+                    object_hook=lambda x: InkMessage(**x),
                 ),
             )
         }

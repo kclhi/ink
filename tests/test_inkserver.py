@@ -18,7 +18,9 @@ def test_sendMessage() -> None:
 
 
 def test_signMessages() -> Signature:
-    response: Response = client.post('/signMessages', json=[{'message': 'hello world'}])
+    response: Response = client.post(
+        '/signMessages', json=[{'sender': 'user', 'text': 'hello world'}]
+    )
     assert response.status_code == 200
     signature: Signature = response.json(object_hook=lambda x: Signature(**x))
     assert type(signature.signature) == str and len(signature.signature) > 0
@@ -28,7 +30,9 @@ def test_signMessages() -> Signature:
 def test_verifySignature() -> None:
     response: Response = client.get(
         '/verifySignature/'
-        + urllib.parse.quote(json.dumps([{'message': 'hello world'}]), safe='')
+        + urllib.parse.quote(
+            json.dumps([{'sender': 'user', 'text': 'hello world'}]), safe=''
+        )
         + '/'
         + urllib.parse.quote(test_signMessages().signature, safe='')
     )
