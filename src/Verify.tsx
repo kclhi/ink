@@ -8,6 +8,7 @@ import DOMPurify from 'dompurify';
 const Verify: React.FC = () => {
   const [verificationData, setVerificationData] = useState<Verified | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [time, setTime] = useState<Date>(new Date());
   const [searchParams] = useSearchParams();
   const messages: string | null = searchParams.get('messages');
   const signature: string | null = searchParams.get('signedMessages');
@@ -27,9 +28,18 @@ const Verify: React.FC = () => {
         );
         setVerificationData(response.data);
         setParsedMessages(JSON.parse(messages || ''));
-        setLoading(false);
       } catch(error) {
         console.error('Error verifiying chat:', error);
+        return setLoading(false);
+      }
+      try {
+        const response: AxiosResponse<Time> = await axios.post('http://localhost:8000/extractTime', {
+          timestamp: timestamp
+        });
+        setTime(new Date(response.data.time));
+        setLoading(false);
+      } catch(error) {
+        console.error('Error getting timestamp:', error);
         setLoading(false);
       }
     };
@@ -42,7 +52,17 @@ const Verify: React.FC = () => {
         <p>Verifying signature...</p>
       ) : verificationData && verificationData.verified ? (
         <div style={{textAlign: 'center'}}>
-          <p>Yep, that&apos;s one of our chats:</p>
+          <p>Yep, that&apos;s one of our chats.</p>
+          <p>
+            It took place on{' '}
+            {time.toLocaleString('en-gb', {weekday: 'long'}) +
+              ' ' +
+              time.getDate() +
+              (['st', 'nd', 'rd'][((((time.getDate() + 90) % 100) - 10) % 10) - 1] || 'th') +
+              ' ' +
+              time.toLocaleString('en-gb', {month: 'long'})}{' '}
+            at {time.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', hour12: true})} (UTC):
+          </p>
           <div className="chat-window">
             {parsedMessages.map((message, index) => (
               <div

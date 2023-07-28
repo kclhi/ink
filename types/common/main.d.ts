@@ -6,3 +6,7 @@ interface Message {
 interface Verified {
   verified: boolean;
 }
+
+interface Time {
+  time: str;
+}
