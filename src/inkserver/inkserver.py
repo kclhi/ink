@@ -10,6 +10,7 @@ from inkserver.inkserver_types import (
     Message,
     Signature,
     SignedMessages,
+    Time,
     Verified,
     Timestamp,
 )
@@ -69,3 +70,9 @@ def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONRes
             and ink.verifyTimestamp(signedMessages, unquote(timestamp))
         }
     )
+
+
+@app.post("/extractTime")
+def extractTime(timestamp: Timestamp) -> Time:
+    ink: Ink = Ink()
+    return Time(time=ink.extractTime(unquote(timestamp.timestamp)))

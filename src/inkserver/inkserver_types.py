@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 
@@ -19,3 +20,7 @@ class Timestamp(BaseModel):
 
 class SignedMessages(BaseModel):
     signedMessages: str
+
+
+class Time(BaseModel):
+    time: datetime

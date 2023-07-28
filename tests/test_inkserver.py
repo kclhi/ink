@@ -1,11 +1,13 @@
+from datetime import datetime
 import json
 import urllib.parse
 from functools import reduce
+from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from httpx import Response
 
 from inkserver.inkserver import app
-from inkserver.inkserver_types import Message, Signature, Timestamp, Verified
+from inkserver.inkserver_types import Message, Signature, Time, Timestamp, Verified
 
 client = TestClient(app)
 
@@ -51,3 +53,18 @@ def test_verifySignature() -> None:
     assert response.status_code == 200
     verified: Verified = response.json(object_hook=lambda x: Verified(**x))
     assert type(verified.verified) == bool and verified.verified
+
+
+def test_extractTime() -> None:
+    timeNow: datetime = datetime.now(tz=ZoneInfo('UTC'))
+    response: Response = client.post(
+        '/extractTime',
+        json={'timestamp': urllib.parse.quote(test_getTimestamp().timestamp, safe='')},
+    )
+    assert response.status_code == 200
+    time: Time = response.json(object_hook=lambda x: Time(**x))
+    assert (
+        type(time.time) == datetime
+        and time.time.hour == timeNow.hour
+        and time.time.minute == timeNow.minute
+    )
