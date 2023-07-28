@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
-import {useParams} from 'react-router-dom';
+import {useSearchParams} from 'react-router-dom';
 
 import './Chat.css';
 import DOMPurify from 'dompurify';
@@ -8,28 +8,33 @@ import DOMPurify from 'dompurify';
 const Verify: React.FC = () => {
   const [verificationData, setVerificationData] = useState<Verified | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const {messages, signature} = useParams<VerificationDetails>();
+  const [searchParams] = useSearchParams();
+  const messages: string | null = searchParams.get('messages');
+  const signature: string | null = searchParams.get('signedMessages');
+  const timestamp: string | null = searchParams.get('timestamp');
   const [parsedMessages, setParsedMessages] = useState<Message[]>([]);
 
   useEffect(() => {
-    const fetchData = async(): Promise<void> => {
+    const verify = async(): Promise<void> => {
       try {
         const response: AxiosResponse<Verified> = await axios.get(
-          'http://localhost:8000/verifySignature/' +
+          'http://localhost:8000/verifySignature?messages=' +
             encodeURIComponent(messages || '') +
-            '/' +
-            encodeURIComponent(signature || '')
+            '&signedMessages=' +
+            encodeURIComponent(signature || '') +
+            '&timestamp=' +
+            encodeURIComponent(timestamp || '')
         );
         setVerificationData(response.data);
         setParsedMessages(JSON.parse(messages || ''));
         setLoading(false);
       } catch(error) {
-        console.error('Error fetching data:', error);
+        console.error('Error verifiying chat:', error);
         setLoading(false);
       }
     };
-    fetchData();
-  }, [messages, signature]);
+    verify();
+  }, [messages, signature, timestamp]);
 
   return (
     <div>
@@ -52,6 +57,12 @@ const Verify: React.FC = () => {
               <i className="fas fa-lock"></i>
             </div>
             <div className="right-column">{signature}</div>
+          </div>
+          <div className="split-div">
+            <div className="left-column">
+              <i className="fas fa-clock"></i>
+            </div>
+            <div className="right-column">{timestamp}</div>
           </div>
         </div>
       ) : (

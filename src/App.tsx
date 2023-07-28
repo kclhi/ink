@@ -10,7 +10,7 @@ const App: React.FC = () => {
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/verifySignature/:messages/:signature" element={<Verify />} />
+        <Route path="/verifySignature" element={<Verify />} />
       </Routes>
     </Router>
   );

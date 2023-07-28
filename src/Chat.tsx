@@ -43,18 +43,23 @@ const Chat: React.FC = () => {
     if(!messages) return;
 
     try {
-      const response = await axios.post('http://localhost:8000/signMessages', messages);
+      const signatureResponse = await axios.post('http://localhost:8000/signMessages', messages);
+      const timestampResponse = await axios.post('http://localhost:8000/getTimestamp', {
+        signedMessages: signatureResponse.data.signature
+      });
 
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           text:
-            'This chat has now been verified. To demonstrate this, share or visit the following link: <a href="/verifySignature/' +
+            'This chat has now been verified. To demonstrate this, share or visit the following link: <a href="/verifySignature?messages=' +
             encodeURIComponent(JSON.stringify(messages)) +
-            '/' +
-            encodeURIComponent(response.data.signature) +
+            '&signedMessages=' +
+            encodeURIComponent(signatureResponse.data.signature) +
+            '&timestamp=' +
+            encodeURIComponent(timestampResponse.data.timestamp) +
             '">' +
-            response.data.signature.substring(0, 7) +
+            signatureResponse.data.signature.substring(0, 7) +
             '</a>',
           sender: 'bot'
         }
