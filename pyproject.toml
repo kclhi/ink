@@ -10,3 +10,5 @@ dependencies = []
 requires = ["setuptools>=43.0.0", "wheel"]
 [tool.setuptools]
 package-data = {"inkserver" = ["py.typed"]}
+[tool.pytest.ini_options]
+pythonpath = ["src"]
