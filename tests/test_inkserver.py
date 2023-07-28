@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from httpx import Response
 
 from inkserver.inkserver import app
-from inkserver.inkserver_types import Message, Signature, Verified
+from inkserver.inkserver_types import Message, Signature, Timestamp, Verified
 
 client = TestClient(app)
 
@@ -27,14 +27,26 @@ def test_signMessages() -> Signature:
     return signature
 
 
+def test_getTimestamp() -> Timestamp:
+    response: Response = client.post(
+        '/getTimestamp', json={'signedMessages': test_signMessages().signature}
+    )
+    assert response.status_code == 200
+    timestamp: Timestamp = response.json(object_hook=lambda x: Timestamp(**x))
+    assert type(timestamp.timestamp) == str and len(timestamp.timestamp) > 0
+    return timestamp
+
+
 def test_verifySignature() -> None:
     response: Response = client.get(
-        '/verifySignature/'
+        '/verifySignature?messages='
         + urllib.parse.quote(
             json.dumps([{'sender': 'user', 'text': 'hello world'}]), safe=''
         )
-        + '/'
+        + '&signedMessages='
         + urllib.parse.quote(test_signMessages().signature, safe='')
+        + '&timestamp='
+        + urllib.parse.quote(test_getTimestamp().timestamp, safe='')
     )
     assert response.status_code == 200
     verified: Verified = response.json(object_hook=lambda x: Verified(**x))

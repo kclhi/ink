@@ -1,13 +1,18 @@
 import json
-from typing import cast
-import urllib.parse
+from urllib.parse import unquote
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
 from ink.ink import Ink
-from inkserver.inkserver_types import Message, Signature, Verified
+from inkserver.inkserver_types import (
+    Message,
+    Signature,
+    SignedMessages,
+    Verified,
+    Timestamp,
+)
 from ink.ink_types import InkMessage
 
 load_dotenv()
@@ -38,17 +43,29 @@ def readMessages(messages: list[InkMessage]) -> JSONResponse:
     return JSONResponse(content={'signature': ink.signMessages(messages)})
 
 
-@app.get("/verifySignature/{messages}/{signature:path}", response_model=Verified)
-def readSignature(messages: str, signature: str) -> JSONResponse:
+@app.post("/getTimestamp", response_model=Timestamp)
+def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
+    ink: Ink = Ink()
+    return JSONResponse(
+        content={'timestamp': ink.getTimestamp(signedMessages.signedMessages)}
+    )
+
+
+@app.get(
+    "/verifySignature",
+    response_model=Verified,
+)
+def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONResponse:
     ink: Ink = Ink()
     return JSONResponse(
         content={
             'verified': ink.verifySignature(
-                urllib.parse.unquote(signature),
+                unquote(signedMessages),
                 json.loads(
-                    urllib.parse.unquote(messages),
+                    unquote(messages),
                     object_hook=lambda x: InkMessage(**x),
                 ),
             )
+            and ink.verifyTimestamp(signedMessages, unquote(timestamp))
         }
     )

@@ -11,3 +11,11 @@ class Signature(BaseModel):
 
 class Verified(BaseModel):
     verified: bool
+
+
+class Timestamp(BaseModel):
+    timestamp: str
+
+
+class SignedMessages(BaseModel):
+    signedMessages: str
