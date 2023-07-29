@@ -4,3 +4,4 @@ fastapi
 types-requests
 uvicorn
 ./lib/ink
+itsdangerous

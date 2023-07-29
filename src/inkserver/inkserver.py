@@ -1,8 +1,11 @@
-import base64, json
+import base64, json, os
+from dataclasses import asdict
+from typing import cast
 from urllib.parse import unquote
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
 from ink.ink import Ink
@@ -20,31 +23,54 @@ load_dotenv()
 app = FastAPI()
 
 origins = [
-    "http://localhost:3000",
+    'http://localhost:3000',
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
+app.add_middleware(SessionMiddleware, secret_key=os.environ['sessionKey'])
 
 
-@app.post("/sendMessage", response_model=Message)
-def readMessage(message: Message) -> JSONResponse:
+@app.post('/sendMessage', response_model=Message)
+def readMessage(message: Message, request: Request) -> JSONResponse:
+    request.session.setdefault('messages', []).append(
+        asdict(InkMessage(sender='user', text=message.message)),
+    )
     ink: Ink = Ink()
-    return JSONResponse(content={'message': ink.sendMessage(message.message)})
+    response: str = ink.sendMessage(message.message)
+    request.session.setdefault('messages', []).append(
+        asdict(InkMessage(sender='bot', text=response)),
+    )
+    return JSONResponse(content={'message': response})
 
 
-@app.post("/signMessages", response_model=Signature)
-def readMessages(messages: list[InkMessage]) -> JSONResponse:
+@app.post('/signMessages', response_model=Signature)
+def readMessages(request: Request) -> JSONResponse:
+    if 'messages' not in request.session.keys() or (
+        'messages' in request.session.keys()
+        and len(str(request.session.get('messages'))) == 0
+    ):
+        raise HTTPException(status_code=500, detail='Nothing to sign')
     ink: Ink = Ink()
-    return JSONResponse(content={'signature': ink.signMessages(messages)})
+    return JSONResponse(
+        content={
+            'signature': ink.signMessages(
+                [
+                    InkMessage(**message)
+                    for message in cast(
+                        list[dict[str, str]], request.session.get('messages')
+                    )
+                ]
+            )
+        }
+    )
 
 
-@app.post("/getTimestamp", response_model=Timestamp)
+@app.post('/getTimestamp', response_model=Timestamp)
 def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
     ink: Ink = Ink()
     return JSONResponse(
@@ -53,7 +79,7 @@ def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
 
 
 @app.get(
-    "/verifySignature",
+    '/verifySignature',
     response_model=Verified,
 )
 def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONResponse:
@@ -72,7 +98,7 @@ def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONRes
     )
 
 
-@app.post("/extractTime")
+@app.post('/extractTime')
 def extractTime(timestamp: Timestamp) -> Time:
     ink: Ink = Ink()
     return Time(time=ink.extractTime(unquote(timestamp.timestamp)))

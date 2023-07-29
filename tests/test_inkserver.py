@@ -1,5 +1,7 @@
 import base64, json
+import pytest  # type: ignore
 from datetime import datetime
+from typing import Any
 import urllib.parse
 from functools import reduce
 from zoneinfo import ZoneInfo
@@ -8,30 +10,32 @@ from httpx import Response
 
 from inkserver.inkserver import app
 from inkserver.inkserver_types import Message, Signature, Time, Timestamp, Verified
+from ink.ink_types import InkMessage
 
-client = TestClient(app)
+
+@pytest.fixture
+def mock_sendMessage(mocker: Any) -> None:
+    return mocker.patch('ink.ink.Ink.sendMessage', return_value='bar')
 
 
-def test_sendMessage() -> None:
-    response: Response = client.post('/sendMessage', json={'message': 'hello world'})
+def sendMessage(client: TestClient) -> None:
+    response: Response = client.post('/sendMessage', json={'message': 'foo'})
     assert response.status_code == 200
     message: Message = response.json(object_hook=lambda x: Message(**x))
     assert type(message.message) == str and len(message.message) > 0
 
 
-def test_signMessages() -> Signature:
-    response: Response = client.post(
-        '/signMessages', json=[{'sender': 'user', 'text': 'hello world'}]
-    )
+def signMessages(client: TestClient) -> Signature:
+    response: Response = client.post('/signMessages')
     assert response.status_code == 200
     signature: Signature = response.json(object_hook=lambda x: Signature(**x))
     assert type(signature.signature) == str and len(signature.signature) > 0
     return signature
 
 
-def test_getTimestamp() -> Timestamp:
+def getTimestamp(client: TestClient) -> Timestamp:
     response: Response = client.post(
-        '/getTimestamp', json={'signedMessages': test_signMessages().signature}
+        '/getTimestamp', json={'signedMessages': signMessages(client).signature}
     )
     assert response.status_code == 200
     timestamp: Timestamp = response.json(object_hook=lambda x: Timestamp(**x))
@@ -39,30 +43,58 @@ def test_getTimestamp() -> Timestamp:
     return timestamp
 
 
-def test_verifySignature() -> None:
+def test_sendMessage(mock_sendMessage: Any) -> None:
+    client: TestClient = TestClient(app)
+
+    sendMessage(client)
+
+
+def test_signMessages(mock_sendMessage: Any) -> None:
+    client: TestClient = TestClient(app)
+    sendMessage(client)
+    signMessages(client)
+
+
+def test_getTimestamp(mock_sendMessage: Any) -> None:
+    client: TestClient = TestClient(app)
+    sendMessage(client)
+    getTimestamp(client)
+
+
+def test_verifySignature(mock_sendMessage: Any) -> None:
+    client = TestClient(app)
+    sendMessage(client)
     response: Response = client.get(
         '/verifySignature?messages='
         + urllib.parse.quote(
             base64.b64encode(
-                json.dumps([{'sender': 'user', 'text': 'hello world'}]).encode('utf-8')
+                json.dumps(
+                    [
+                        InkMessage(sender='user', text='foo'),
+                        InkMessage(sender='bot', text='bar'),
+                    ],
+                    default=lambda o: o.__dict__,
+                ).encode('utf-8')
             ).decode('utf-8'),
             safe='',
         )
         + '&signedMessages='
-        + urllib.parse.quote(test_signMessages().signature, safe='')
+        + urllib.parse.quote(signMessages(client).signature, safe='')
         + '&timestamp='
-        + urllib.parse.quote(test_getTimestamp().timestamp, safe='')
+        + urllib.parse.quote(getTimestamp(client).timestamp, safe='')
     )
     assert response.status_code == 200
     verified: Verified = response.json(object_hook=lambda x: Verified(**x))
     assert type(verified.verified) == bool and verified.verified
 
 
-def test_extractTime() -> None:
+def test_extractTime(mock_sendMessage: Any) -> None:
+    client = TestClient(app)
+    sendMessage(client)
     timeNow: datetime = datetime.now(tz=ZoneInfo('UTC'))
     response: Response = client.post(
         '/extractTime',
-        json={'timestamp': urllib.parse.quote(test_getTimestamp().timestamp, safe='')},
+        json={'timestamp': urllib.parse.quote(getTimestamp(client).timestamp, safe='')},
     )
     assert response.status_code == 200
     time: Time = response.json(object_hook=lambda x: Time(**x))
