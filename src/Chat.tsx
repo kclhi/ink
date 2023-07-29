@@ -53,7 +53,7 @@ const Chat: React.FC = () => {
         {
           text:
             'This chat has now been verified. To demonstrate this, share or visit the following link: <a href="/verifySignature?messages=' +
-            encodeURIComponent(JSON.stringify(messages)) +
+            encodeURIComponent(btoa(JSON.stringify(messages))) +
             '&signedMessages=' +
             encodeURIComponent(signatureResponse.data.signature) +
             '&timestamp=' +

@@ -27,7 +27,7 @@ const Verify: React.FC = () => {
             encodeURIComponent(timestamp || '')
         );
         setVerificationData(response.data);
-        setParsedMessages(JSON.parse(messages || ''));
+        setParsedMessages(JSON.parse(atob(messages || '')));
       } catch(error) {
         console.error('Error verifiying chat:', error);
         return setLoading(false);
