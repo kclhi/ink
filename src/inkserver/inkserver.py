@@ -1,4 +1,4 @@
-import json
+import base64, json
 from urllib.parse import unquote
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -63,7 +63,7 @@ def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONRes
             'verified': ink.verifySignature(
                 unquote(signedMessages),
                 json.loads(
-                    unquote(messages),
+                    base64.b64decode(unquote(messages).encode('utf-8')),
                     object_hook=lambda x: InkMessage(**x),
                 ),
             )

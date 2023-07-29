@@ -1,5 +1,5 @@
+import base64, json
 from datetime import datetime
-import json
 import urllib.parse
 from functools import reduce
 from zoneinfo import ZoneInfo
@@ -43,7 +43,10 @@ def test_verifySignature() -> None:
     response: Response = client.get(
         '/verifySignature?messages='
         + urllib.parse.quote(
-            json.dumps([{'sender': 'user', 'text': 'hello world'}]), safe=''
+            base64.b64encode(
+                json.dumps([{'sender': 'user', 'text': 'hello world'}]).encode('utf-8')
+            ).decode('utf-8'),
+            safe='',
         )
         + '&signedMessages='
         + urllib.parse.quote(test_signMessages().signature, safe='')
