@@ -10,3 +10,7 @@ interface Verified {
 interface Time {
   time: str;
 }
+
+interface QRCodeGeneratorProps {
+  url: string;
+}
