@@ -16,9 +16,9 @@ const Chat: React.FC = () => {
     setMessages((prevMessages) => [...prevMessages, {text: message, sender: 'user'}]);
 
     try {
-      const response: AxiosResponse = await axios.post('http://localhost:8000/sendMessage', {
+      const response: AxiosResponse = await axios.post('http://127.0.0.1:8000/sendMessage', {
         message: message
-      });
+      }, { withCredentials: true});
 
       setMessages((prevMessages) => [...prevMessages, {text: response.data.message, sender: 'bot'}]);
 
@@ -43,8 +43,8 @@ const Chat: React.FC = () => {
     if(!messages) return;
 
     try {
-      const signatureResponse = await axios.post('http://localhost:8000/signMessages', messages);
-      const timestampResponse = await axios.post('http://localhost:8000/getTimestamp', {
+      const signatureResponse = await axios.post('http://127.0.0.1:8000/signMessages', {}, { withCredentials: true});
+      const timestampResponse = await axios.post('http://127.0.0.1:8000/getTimestamp', {
         signedMessages: signatureResponse.data.signature
       });
 

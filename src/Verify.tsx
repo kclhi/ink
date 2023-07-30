@@ -19,7 +19,7 @@ const Verify: React.FC = () => {
     const verify = async(): Promise<void> => {
       try {
         const response: AxiosResponse<Verified> = await axios.get(
-          'http://localhost:8000/verifySignature?messages=' +
+          'http://127.0.0.1:8000/verifySignature?messages=' +
             encodeURIComponent(messages || '') +
             '&signedMessages=' +
             encodeURIComponent(signature || '') +
@@ -33,7 +33,7 @@ const Verify: React.FC = () => {
         return setLoading(false);
       }
       try {
-        const response: AxiosResponse<Time> = await axios.post('http://localhost:8000/extractTime', {
+        const response: AxiosResponse<Time> = await axios.post('http://127.0.0.1:8000/extractTime', {
           timestamp: timestamp
         });
         setTime(new Date(response.data.time));
