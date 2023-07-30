@@ -23,7 +23,7 @@ load_dotenv()
 app = FastAPI()
 
 origins = [
-    'http://localhost:3000',
+    'https://127.0.0.1:3000',
 ]
 app.add_middleware(
     CORSMiddleware,
@@ -32,7 +32,14 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
-app.add_middleware(SessionMiddleware, secret_key=os.environ['sessionKey'])
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ['cookie_sessionKey'],
+    session_cookie=os.environ['cookie_name'],
+    same_site=os.environ['cookie_sameSite'],
+    https_only=os.environ['cookie_https'] == "True",
+    max_age=None,
+)
 
 
 @app.post('/sendMessage', response_model=Message)
@@ -56,18 +63,11 @@ def readMessages(request: Request) -> JSONResponse:
     ):
         raise HTTPException(status_code=500, detail='Nothing to sign')
     ink: Ink = Ink()
-    return JSONResponse(
-        content={
-            'signature': ink.signMessages(
-                [
-                    InkMessage(**message)
-                    for message in cast(
-                        list[dict[str, str]], request.session.get('messages')
-                    )
-                ]
-            )
-        }
-    )
+    inkMessages: list[InkMessage] = [
+        InkMessage(**message)
+        for message in cast(list[dict[str, str]], request.session.get('messages'))
+    ]
+    return JSONResponse(content={'signature': ink.signMessages(inkMessages)})
 
 
 @app.post('/getTimestamp', response_model=Timestamp)
@@ -84,14 +84,15 @@ def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
 )
 def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONResponse:
     ink: Ink = Ink()
+    inkMessages: list[InkMessage] = json.loads(
+        base64.b64decode(unquote(messages).encode('utf-8')),
+        object_hook=lambda o: InkMessage(**o),
+    )
     return JSONResponse(
         content={
             'verified': ink.verifySignature(
                 unquote(signedMessages),
-                json.loads(
-                    base64.b64decode(unquote(messages).encode('utf-8')),
-                    object_hook=lambda x: InkMessage(**x),
-                ),
+                inkMessages,
             )
             and ink.verifyTimestamp(signedMessages, unquote(timestamp))
         }
