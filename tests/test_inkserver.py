@@ -15,20 +15,20 @@ from ink.ink_types import InkMessage
 
 @pytest.fixture
 def mock_sendMessage(mocker: Any) -> None:
-    return mocker.patch('ink.ink.Ink.sendMessage', return_value='bar')
+    return mocker.patch('ink.ink.Ink.sendMessage', return_value=InkMessage(sender='chatbot', text='bar', conversationId='baz'))
 
 
 def sendMessage(client: TestClient) -> None:
     response: Response = client.post('/sendMessage', json={'message': 'foo'})
     assert response.status_code == 200
-    message: Message = response.json(object_hook=lambda x: Message(**x))
-    assert type(message.message) == str and len(message.message) > 0
+    message: Message = Message(message=response.json()['message'])
+    assert type(message.message) == str and len(message.message) > 0 and message.message == 'bar'
 
 
 def signMessages(client: TestClient) -> Signature:
     response: Response = client.post('/signMessages')
     assert response.status_code == 200
-    signature: Signature = response.json(object_hook=lambda x: Signature(**x))
+    signature: Signature = response.json(object_hook=lambda d: Signature(**d))
     assert type(signature.signature) == str and len(signature.signature) > 0
     return signature
 
@@ -38,14 +38,13 @@ def getTimestamp(client: TestClient) -> Timestamp:
         '/getTimestamp', json={'signedMessages': signMessages(client).signature}
     )
     assert response.status_code == 200
-    timestamp: Timestamp = response.json(object_hook=lambda x: Timestamp(**x))
+    timestamp: Timestamp = response.json(object_hook=lambda d: Timestamp(**d))
     assert type(timestamp.timestamp) == str and len(timestamp.timestamp) > 0
     return timestamp
 
 
 def test_sendMessage(mock_sendMessage: Any) -> None:
     client: TestClient = TestClient(app)
-
     sendMessage(client)
 
 
@@ -71,7 +70,7 @@ def test_verifySignature(mock_sendMessage: Any) -> None:
                 json.dumps(
                     [
                         InkMessage(sender='user', text='foo'),
-                        InkMessage(sender='bot', text='bar'),
+                        InkMessage(sender='chatbot', text='bar'),
                     ],
                     default=lambda o: o.__dict__,
                 ).encode('utf-8')
