@@ -25,7 +25,7 @@ const Chat: React.FC = () => {
         {withCredentials: true}
       );
 
-      setMessages((prevMessages) => [...prevMessages, {text: response.data.message, sender: 'bot'}]);
+      setMessages((prevMessages) => [...prevMessages, {text: response.data.message, sender: 'chatbot'}]);
 
       setInputText('');
     } catch(error) {
@@ -69,11 +69,11 @@ const Chat: React.FC = () => {
             '">' +
             signatureResponse.data.signature.substring(0, 7) +
             '</a>',
-          sender: 'bot'
+          sender: 'chatbot'
         },
         {
           text: verificationURL,
-          sender: 'bot'
+          sender: 'chatbot'
         }
       ]);
       setInputText('');
