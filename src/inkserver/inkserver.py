@@ -9,7 +9,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
 from ink.ink import Ink
-from ink.bard import Bard
+from ink.llama2 import Llama2
 from inkserver.inkserver_types import (
     Message,
     Signature,
@@ -48,7 +48,7 @@ def readMessage(message: Message, request: Request) -> JSONResponse:
     request.session.setdefault('messages', []).append(
         asdict(InkMessage(sender='user', text=message.message)),
     )
-    ink: Ink = Ink(Bard())
+    ink: Ink = Ink(Llama2())
     response: InkMessage = ink.sendMessage(message.message)
     request.session.setdefault('messages', []).append(
         asdict(InkMessage(sender=response.sender, text=response.text)),
@@ -63,7 +63,7 @@ def readMessages(request: Request) -> JSONResponse:
         and len(str(request.session.get('messages'))) == 0
     ):
         raise HTTPException(status_code=500, detail='Nothing to sign')
-    ink: Ink = Ink(Bard())
+    ink: Ink = Ink(Llama2())
     inkMessages: list[InkMessage] = [
         InkMessage(**message)
         for message in cast(list[dict[str, str]], request.session.get('messages'))
@@ -73,7 +73,7 @@ def readMessages(request: Request) -> JSONResponse:
 
 @app.post('/getTimestamp', response_model=Timestamp)
 def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
-    ink: Ink = Ink(Bard())
+    ink: Ink = Ink(Llama2())
     return JSONResponse(
         content={'timestamp': ink.getTimestamp(signedMessages.signedMessages)}
     )
@@ -84,7 +84,7 @@ def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
     response_model=Verified,
 )
 def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONResponse:
-    ink: Ink = Ink(Bard())
+    ink: Ink = Ink(Llama2())
     inkMessages: list[InkMessage] = json.loads(
         base64.b64decode(unquote(messages).encode('utf-8')),
         object_hook=lambda o: InkMessage(**o),
@@ -102,5 +102,5 @@ def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONRes
 
 @app.post('/extractTime')
 def extractTime(timestamp: Timestamp) -> Time:
-    ink: Ink = Ink(Bard())
+    ink: Ink = Ink(Llama2())
     return Time(time=ink.extractTime(unquote(timestamp.timestamp)))
