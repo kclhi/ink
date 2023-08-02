@@ -4,7 +4,7 @@ import DOMPurify from 'dompurify';
 import QRCodeGenerator from './QRCodeGenerator';
 
 import './Chat.css';
-import { CHAT_SERVER_URL, APP_URL } from './config';
+import {CHAT_SERVER_URL, APP_URL} from './config';
 
 const Chat: React.FC = () => {
   const [inputText, setInputText] = useState('');
@@ -49,17 +49,13 @@ const Chat: React.FC = () => {
     if(!messages) return;
 
     try {
-      const signatureResponse = await axios.post(
-        CHAT_SERVER_URL + '/signMessages',
-        {},
-        {withCredentials: true}
-      );
+      const signatureResponse = await axios.post(CHAT_SERVER_URL + '/signMessages', {}, {withCredentials: true});
       const timestampResponse = await axios.post(CHAT_SERVER_URL + '/getTimestamp', {
         signedMessages: signatureResponse.data.signature
       });
 
       const verificationURL: string =
-      APP_URL +
+        APP_URL +
         '/verifySignature?messages=' +
         encodeURIComponent(btoa(JSON.stringify(messages))) +
         '&signedMessages=' +

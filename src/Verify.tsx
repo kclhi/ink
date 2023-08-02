@@ -4,7 +4,7 @@ import {useSearchParams} from 'react-router-dom';
 import DOMPurify from 'dompurify';
 
 import './Chat.css';
-import { CHAT_SERVER_URL } from './config';
+import {CHAT_SERVER_URL} from './config';
 
 const Verify: React.FC = () => {
   const [verificationData, setVerificationData] = useState<Verified | null>(null);
