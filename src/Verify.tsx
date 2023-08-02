@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
 import {useSearchParams} from 'react-router-dom';
+import DOMPurify from 'dompurify';
 
 import './Chat.css';
-import DOMPurify from 'dompurify';
+import { CHAT_SERVER_URL } from './config';
 
 const Verify: React.FC = () => {
   const [verificationData, setVerificationData] = useState<Verified | null>(null);
@@ -19,7 +20,8 @@ const Verify: React.FC = () => {
     const verify = async(): Promise<void> => {
       try {
         const response: AxiosResponse<Verified> = await axios.get(
-          'http://127.0.0.1:8000/verifySignature?messages=' +
+          CHAT_SERVER_URL +
+            '/verifySignature?messages=' +
             encodeURIComponent(messages || '') +
             '&signedMessages=' +
             encodeURIComponent(signature || '') +
@@ -33,7 +35,7 @@ const Verify: React.FC = () => {
         return setLoading(false);
       }
       try {
-        const response: AxiosResponse<Time> = await axios.post('http://127.0.0.1:8000/extractTime', {
+        const response: AxiosResponse<Time> = await axios.post(CHAT_SERVER_URL + '/extractTime', {
           timestamp: timestamp
         });
         setTime(new Date(response.data.time));

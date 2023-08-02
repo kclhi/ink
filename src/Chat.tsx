@@ -1,9 +1,10 @@
 import React, {useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
 import DOMPurify from 'dompurify';
+import QRCodeGenerator from './QRCodeGenerator';
 
 import './Chat.css';
-import QRCodeGenerator from './QRCodeGenerator';
+import { CHAT_SERVER_URL, APP_URL } from './config';
 
 const Chat: React.FC = () => {
   const [inputText, setInputText] = useState('');
@@ -18,7 +19,7 @@ const Chat: React.FC = () => {
 
     try {
       const response: AxiosResponse = await axios.post(
-        'http://127.0.0.1:8000/sendMessage',
+        CHAT_SERVER_URL + '/sendMessage',
         {
           message: message
         },
@@ -48,13 +49,18 @@ const Chat: React.FC = () => {
     if(!messages) return;
 
     try {
-      const signatureResponse = await axios.post('http://127.0.0.1:8000/signMessages', {}, {withCredentials: true});
-      const timestampResponse = await axios.post('http://127.0.0.1:8000/getTimestamp', {
+      const signatureResponse = await axios.post(
+        CHAT_SERVER_URL + '/signMessages',
+        {},
+        {withCredentials: true}
+      );
+      const timestampResponse = await axios.post(CHAT_SERVER_URL + '/getTimestamp', {
         signedMessages: signatureResponse.data.signature
       });
 
       const verificationURL: string =
-        'https://127.0.0.1:3000/verifySignature?messages=' +
+      APP_URL +
+        '/verifySignature?messages=' +
         encodeURIComponent(btoa(JSON.stringify(messages))) +
         '&signedMessages=' +
         encodeURIComponent(signatureResponse.data.signature) +
