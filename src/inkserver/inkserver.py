@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
+from configparser import ConfigParser
 
 from ink.ink import Ink
 from ink.llama2 import Llama2
@@ -22,11 +23,14 @@ from ink.ink_types import InkMessage
 from llama2.llama2_types import Llama2ChatExchange
 
 load_dotenv()
-app = FastAPI()
+app: FastAPI = FastAPI()
 
-origins = [
-    'https://127.0.0.1:3000',
-]
+config: ConfigParser = ConfigParser()
+config.read(
+    f'config/config.{os.environ["ENV"] if "ENV" in os.environ.keys() else "dev"}.ini'
+)
+
+origins = [config.get('URLS', 'ORIGIN', vars=os.environ)]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -36,10 +40,10 @@ app.add_middleware(
 )
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.environ['cookie_sessionKey'],
-    session_cookie=os.environ['cookie_name'],
-    same_site=os.environ['cookie_sameSite'],
-    https_only=os.environ['cookie_https'] == "True",
+    secret_key=config.get('COOKIE', 'SESSION_KEY', vars=os.environ),
+    session_cookie=config.get('COOKIE', 'NAME'),
+    same_site=config.get('COOKIE', 'SAME_SITE'),
+    https_only=config.get('COOKIE', 'HTTPS') == 'True',
     max_age=None,
 )
 
@@ -50,16 +54,22 @@ def readMessage(message: Message, request: Request) -> JSONResponse:
         asdict(InkMessage(sender='user', text=message.message)),
     )
     llama2: Llama2 = Llama2(
-        list(
+        apiURL=config.get('URLS', 'API_URL'),
+        chat=list(
             map(
                 lambda o: Llama2ChatExchange(**o),
                 json.loads(request.session['prompts']),
             )
         )
         if 'prompts' in request.session.keys()
-        else None
+        else None,
     )
-    ink: Ink = Ink(llama2)
+    ink: Ink = Ink(
+        llama2,
+        config.get('SIGNING', 'PRIVATE_KEY_PATH', vars=os.environ),
+        config.get('SIGNING', 'CERTIFICATE_PATH', vars=os.environ),
+        config.get('SIGNING', 'TSA_CERTIFICATE_PATH', vars=os.environ),
+    )
     response: InkMessage = ink.sendMessage(message.message)
     request.session.setdefault('messages', []).append(
         asdict(InkMessage(sender=response.sender, text=response.text)),
@@ -77,7 +87,12 @@ def readMessages(request: Request) -> JSONResponse:
         and len(str(request.session.get('messages'))) == 0
     ):
         raise HTTPException(status_code=500, detail='Nothing to sign')
-    ink: Ink = Ink(Llama2())
+    ink: Ink = Ink(
+        Llama2(apiURL=config.get('URLS', 'API_URL')),
+        config.get('SIGNING', 'PRIVATE_KEY_PATH', vars=os.environ),
+        config.get('SIGNING', 'CERTIFICATE_PATH', vars=os.environ),
+        config.get('SIGNING', 'TSA_CERTIFICATE_PATH', vars=os.environ),
+    )
     inkMessages: list[InkMessage] = [
         InkMessage(**message)
         for message in cast(list[dict[str, str]], request.session.get('messages'))
@@ -87,7 +102,12 @@ def readMessages(request: Request) -> JSONResponse:
 
 @app.post('/getTimestamp', response_model=Timestamp)
 def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
-    ink: Ink = Ink(Llama2())
+    ink: Ink = Ink(
+        Llama2(apiURL=config.get('URLS', 'API_URL')),
+        config.get('SIGNING', 'PRIVATE_KEY_PATH', vars=os.environ),
+        config.get('SIGNING', 'CERTIFICATE_PATH', vars=os.environ),
+        config.get('SIGNING', 'TSA_CERTIFICATE_PATH', vars=os.environ),
+    )
     return JSONResponse(
         content={'timestamp': ink.getTimestamp(signedMessages.signedMessages)}
     )
@@ -98,7 +118,12 @@ def getTimeStamp(signedMessages: SignedMessages) -> JSONResponse:
     response_model=Verified,
 )
 def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONResponse:
-    ink: Ink = Ink(Llama2())
+    ink: Ink = Ink(
+        Llama2(apiURL=config.get('URLS', 'API_URL')),
+        config.get('SIGNING', 'PRIVATE_KEY_PATH', vars=os.environ),
+        config.get('SIGNING', 'CERTIFICATE_PATH', vars=os.environ),
+        config.get('SIGNING', 'TSA_CERTIFICATE_PATH', vars=os.environ),
+    )
     inkMessages: list[InkMessage] = json.loads(
         base64.b64decode(unquote(messages).encode('utf-8')),
         object_hook=lambda o: InkMessage(**o),
@@ -116,5 +141,10 @@ def readSignature(messages: str, signedMessages: str, timestamp: str) -> JSONRes
 
 @app.post('/extractTime')
 def extractTime(timestamp: Timestamp) -> Time:
-    ink: Ink = Ink(Llama2())
+    ink: Ink = Ink(
+        Llama2(apiURL=config.get('URLS', 'API_URL')),
+        config.get('SIGNING', 'PRIVATE_KEY_PATH', vars=os.environ),
+        config.get('SIGNING', 'CERTIFICATE_PATH', vars=os.environ),
+        config.get('SIGNING', 'TSA_CERTIFICATE_PATH', vars=os.environ),
+    )
     return Time(time=ink.extractTime(unquote(timestamp.timestamp)))
