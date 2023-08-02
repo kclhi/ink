@@ -19,6 +19,7 @@ from inkserver.inkserver_types import (
     Timestamp,
 )
 from ink.ink_types import InkMessage
+from llama2.llama2_types import Llama2ChatExchange
 
 load_dotenv()
 app = FastAPI()
@@ -48,10 +49,23 @@ def readMessage(message: Message, request: Request) -> JSONResponse:
     request.session.setdefault('messages', []).append(
         asdict(InkMessage(sender='user', text=message.message)),
     )
-    ink: Ink = Ink(Llama2())
+    llama2: Llama2 = Llama2(
+        list(
+            map(
+                lambda o: Llama2ChatExchange(**o),
+                json.loads(request.session['prompts']),
+            )
+        )
+        if 'prompts' in request.session.keys()
+        else None
+    )
+    ink: Ink = Ink(llama2)
     response: InkMessage = ink.sendMessage(message.message)
     request.session.setdefault('messages', []).append(
         asdict(InkMessage(sender=response.sender, text=response.text)),
+    )
+    request.session['prompts'] = json.dumps(
+        list(map(lambda o: asdict(o), llama2.getChat()))
     )
     return JSONResponse(content={'message': response.text})
 
