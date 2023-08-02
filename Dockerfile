@@ -11,4 +11,4 @@ RUN pip install .
 RUN chown -R www-data:www-data /app
 USER www-data
 EXPOSE 8000
-CMD ["uvicorn", "inkserver:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-keyfile=/etc/ssl/ink.key", "--ssl-certfile=/etc/ssl/ink.crt"]
+CMD ["uvicorn", "inkserver:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/ink/chat", "--ssl-keyfile=/etc/ssl/ink.key", "--ssl-certfile=/etc/ssl/ink.crt"]
