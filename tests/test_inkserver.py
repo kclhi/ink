@@ -3,7 +3,6 @@ import pytest  # type: ignore
 from datetime import datetime
 from typing import Any
 import urllib.parse
-from functools import reduce
 from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from httpx import Response
@@ -15,14 +14,21 @@ from ink.ink_types import InkMessage
 
 @pytest.fixture
 def mock_sendMessage(mocker: Any) -> None:
-    return mocker.patch('ink.ink.Ink.sendMessage', return_value=InkMessage(sender='chatbot', text='bar', conversationId='baz'))
+    return mocker.patch(
+        'ink.ink.Ink.sendMessage',
+        return_value=InkMessage(sender='chatbot', text='bar', conversationId='baz'),
+    )
 
 
 def sendMessage(client: TestClient) -> None:
     response: Response = client.post('/sendMessage', json={'message': 'foo'})
     assert response.status_code == 200
     message: Message = Message(message=response.json()['message'])
-    assert type(message.message) == str and len(message.message) > 0 and message.message == 'bar'
+    assert (
+        type(message.message) == str
+        and len(message.message) > 0
+        and message.message == 'bar'
+    )
 
 
 def signMessages(client: TestClient) -> Signature:
