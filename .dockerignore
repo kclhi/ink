@@ -1,0 +1,5 @@
+.tox/
+*cache/
+.venv/
+.env
+.git/
