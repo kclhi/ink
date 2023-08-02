@@ -11,7 +11,7 @@ RUN chown -R nginx:nginx /var/cache/nginx /var/log/nginx /etc/nginx/nginx.conf
 COPY proxy/certs/ink.crt /etc/nginx/ssl/ink.crt
 COPY proxy/certs/ink.key /etc/nginx/ssl/ink.key
 RUN chmod 644 /etc/nginx/ssl/ink.crt /etc/nginx/ssl/ink.key
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/build /usr/share/nginx/html/ink
 RUN chown -R nginx:nginx /usr/share/nginx/html 
 RUN chmod -R 755 /usr/share/nginx/html
 RUN touch /var/run/nginx.pid
