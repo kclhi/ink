@@ -1,20 +1,31 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import axios, {AxiosResponse} from 'axios';
 import DOMPurify from 'dompurify';
 import QRCodeGenerator from './QRCodeGenerator';
 
 import './Chat.css';
-import {CHAT_SERVER_URL, APP_URL} from './config';
+import {CHAT_SERVER_URL, APP_URL, MAX_QR_LENGTH} from './config';
 
 const Chat: React.FC = () => {
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    return JSON.parse(sessionStorage.getItem('messages') || '[]');
+  });
+  const [loading, setLoading] = useState(false);
+  const bottom = useRef<null | HTMLDivElement>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(event.target.value);
   };
 
+  useEffect(() => {
+    sessionStorage.setItem('messages', JSON.stringify(messages));
+    bottom.current?.scrollIntoView({behavior: 'smooth'});
+  }, [messages]);
+
   const sendMessage = async(message: string) => {
+    setLoading(true);
+    setInputText('');
     setMessages((prevMessages) => [...prevMessages, {text: message, sender: 'user'}]);
 
     try {
@@ -27,8 +38,7 @@ const Chat: React.FC = () => {
       );
 
       setMessages((prevMessages) => [...prevMessages, {text: response.data.message, sender: 'chatbot'}]);
-
-      setInputText('');
+      setLoading(false);
     } catch(error) {
       console.error('Error sending message to API:', error);
     }
@@ -62,8 +72,7 @@ const Chat: React.FC = () => {
         encodeURIComponent(signatureResponse.data.signature) +
         '&timestamp=' +
         encodeURIComponent(timestampResponse.data.timestamp);
-      setMessages((prevMessages) => [
-        ...prevMessages,
+      const newMessages: Message[] = [
         {
           text:
             'This chat has now been verified. To demonstrate this, share or visit the following link: <a href="' +
@@ -72,12 +81,15 @@ const Chat: React.FC = () => {
             signatureResponse.data.signature.substring(0, 7) +
             '</a>',
           sender: 'chatbot'
-        },
-        {
+        }
+      ];
+      if(verificationURL.length < MAX_QR_LENGTH)
+        newMessages.push({
           text: verificationURL,
           sender: 'chatbot'
-        }
-      ]);
+        });
+
+      setMessages((prevMessages) => [...prevMessages, ...newMessages]);
       setInputText('');
     } catch(error) {
       console.error('Error sending message to API:', error);
@@ -86,11 +98,11 @@ const Chat: React.FC = () => {
 
   return (
     <div>
-      <div className="padlock-div">
-        <button onClick={signMessages} className="padlock-button">
+      <div className="padlock-div" style={{opacity: loading ? 0.5 : 1}}>
+        <button onClick={signMessages} className="padlock-button" disabled={loading}>
           <i className="fas fa-lock"></i>
         </button>
-        <div className="chat-window">
+        <div className="chat-window" style={{overflowY: loading ? 'hidden' : 'auto'}}>
           {messages.map((message, index) =>
             !message.text.startsWith('http') ? (
               <div
@@ -104,6 +116,8 @@ const Chat: React.FC = () => {
               </div>
             )
           )}
+          {loading && <div className="loading-spinner"></div>}
+          <div ref={bottom} />
         </div>
         <div className="input-container">
           <input
@@ -112,12 +126,21 @@ const Chat: React.FC = () => {
             onChange={handleInputChange}
             onKeyDown={sendMessageKey}
             placeholder="Type your message..."
+            disabled={loading}
           />
-          <button className="paper-airplane-button" onClick={sendMessageButton}>
+          <button className="paper-airplane-button" onClick={sendMessageButton} disabled={loading}>
             <i className="fas fa-paper-plane"></i>
           </button>
         </div>
       </div>
+      <footer>
+        <div>
+          Chatting with
+          <select>
+            <option>Llama2</option>
+          </select>
+        </div>
+      </footer>
     </div>
   );
 };

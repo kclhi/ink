@@ -74,17 +74,20 @@ const Verify: React.FC = () => {
               ></div>
             ))}
           </div>
-          <div className="split-div">
-            <div className="left-column">
-              <i className="fas fa-lock"></i>
+          <div style={{fontSize: '12px'}}>
+            Security information:
+            <div className="split-div">
+              <div className="left-column">
+                <i className="fas fa-lock"></i>
+              </div>
+              <div className="right-column">{signature}</div>
             </div>
-            <div className="right-column">{signature}</div>
-          </div>
-          <div className="split-div">
-            <div className="left-column">
-              <i className="fas fa-clock"></i>
+            <div className="split-div">
+              <div className="left-column">
+                <i className="fas fa-clock"></i>
+              </div>
+              <div className="right-column">{timestamp}</div>
             </div>
-            <div className="right-column">{timestamp}</div>
           </div>
         </div>
       ) : (
