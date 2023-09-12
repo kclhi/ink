@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    environment:
+      ENV: "prod"
+      PRIVATE_KEY_PATH: ${PRIVATE_KEY_PATH}
+      CERTIFICATE_PATH: ${CERTIFICATE_PATH}
+      TSA_CERTIFICATE_PATH: ${TSA_CERTIFICATE_PATH}
+      COOKIE_SESSION_KEY: ${COOKIE_SESSION_KEY}
+      LLAMA2_URL: ${LLAMA2_URL}
+    ports: 
+      - 8000:8000
+    restart: unless-stopped
+
+networks:
+  default:
+    name: hi_default
+    external: true
