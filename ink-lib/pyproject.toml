@@ -1,0 +1,22 @@
+[project]
+name = "ink" 
+description = "Ink" 
+readme = "README.md"
+version = "1.0.0"
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+dependencies = [
+  "bardapi",
+  "python-dotenv",
+  "cryptography",
+  "rfc3161ng",
+  "llama2@git+ssh://git@github.kcl.ac.uk/hi/llama2.git"
+]
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+[tool.setuptools]
+package-data = {"ink" = ["py.typed"]}
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+log_cli = "true"
+log_cli_level = "DEBUG"
