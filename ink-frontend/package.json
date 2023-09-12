@@ -1,0 +1,51 @@
+{
+  "name": "ink-frontend",
+  "version": "0.1.0",
+  "homepage": "https://kclhi.org/ink",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
+    "@types/dompurify": "^3.0.2",
+    "@types/node": "^20.4.2",
+    "@types/react": "^18.2.15",
+    "@types/react-dom": "^18.2.7",
+    "axios": "^1.4.0",
+    "dompurify": "^3.0.5",
+    "qrcode.react": "^3.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.2",
+    "react-scripts": "5.0.1",
+    "typescript": "^4.9.3",
+    "web-vitals": "^3.4.0"
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "eslint": "^8.45.0",
+    "eslint-plugin-react": "^7.33.0",
+    "prettier": "^3.0.0"
+  },
+  "scripts": {
+    "start": "HTTPS=true HOST=127.0.0.1 react-scripts start --new-window",
+    "build": "react-scripts build",
+    "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!@axios)/'",
+    "eject": "react-scripts eject",
+    "lint": "eslint . --ext .ts --ext .tsx",
+    "prettier": "prettier --config .prettierrc '**/*.ts*' --write; eslint . --ext .ts --ext .tsx --fix"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
